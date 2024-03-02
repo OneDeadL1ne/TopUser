@@ -20,7 +20,7 @@ export default function App() {
     const getUsers = async (idCity: string) => {
         axios
             .get<User[]>(
-                `${import.meta.env.VITE_API}/user-rating/all?city_id=${idCity}`,
+                `${import.meta.env.VITE_API}/user-rating/all/${idCity}`,
                 config
             )
             .then((res) => {
