@@ -8,13 +8,20 @@ import { ScrollArea, ScrollBar } from "./components/ui/scroll-area";
 import { AuthDialog, IToken } from "./components/AuthDialog";
 import { CityCombobox } from "./components/CityCombobox";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
+import { useCookies } from "react-cookie";
 
 export default function App() {
-    const [token, setToken] = useState<IToken | null>(null);
     const [users, setUsers] = useState<User[]>([]);
+    const [cookies, setCookie, removeCookie] = useCookies([
+        "access_token",
+        "refresh_token",
+    ]);
+
+    const expires = new Date();
+    expires.setTime(expires.getTime() + 12 * 60);
 
     const config = {
-        headers: { Authorization: `Bearer ${token?.accessToken}` },
+        headers: { Authorization: `Bearer ${cookies.access_token}` },
     };
 
     const getUsers = async (idCity: string) => {
@@ -29,19 +36,28 @@ export default function App() {
     };
 
     useEffect(() => {
-        const accessToken = localStorage.getItem("accessToken");
-        const refreshToken = localStorage.getItem("refreshToken");
-        if (accessToken && refreshToken) {
-            setToken({
-                accessToken: accessToken,
-                refreshToken: refreshToken,
+        setUsers([]);
+    }, [cookies.access_token]);
+
+    const refresh = async () => {
+        const res = await axios.post<string>(
+            `${import.meta.env.VITE_API}/auth/refresh`,
+            { refresh_token: cookies.refresh_token }
+        );
+
+        if (res.status === 201) {
+            setCookie("access_token", res.data, {
+                path: "/",
+                expires,
             });
         }
-    }, []);
+    };
 
     useEffect(() => {
-        setUsers([]);
-    }, [token]);
+        if (cookies.refresh_token && cookies.access_token) {
+            refresh();
+        }
+    }, []);
 
     const medal = new Map<number, React.ReactNode>();
     medal.set(0, <img src="/gold.png" className="h-[32px] ml-5" />);
@@ -52,10 +68,10 @@ export default function App() {
         <div className="m-3 p-1">
             <div className="w-full flow-root">
                 <div className="float-start">
-                    <CityCombobox getUser={getUsers} token={token} />
+                    <CityCombobox getUser={getUsers} />
                 </div>
                 <div className="float-end">
-                    <AuthDialog setToken={setToken} token={token} />
+                    <AuthDialog />
                 </div>
             </div>
 

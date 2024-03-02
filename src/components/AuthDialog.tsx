@@ -11,28 +11,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import axios from "axios";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-
+import { useState } from "react";
+import { useCookies } from "react-cookie";
 export interface IToken {
     accessToken: string;
     refreshToken: string;
 }
 
-export function AuthDialog({
-    token,
-    setToken,
-}: {
-    token?: IToken | null;
-    setToken: Dispatch<SetStateAction<IToken | null>>;
-}) {
+export function AuthDialog() {
     const [user, setUser] = useState<{ phone: string; password: string }>({
         phone: "+79000000000",
         password: "string",
     });
 
     const [open, setOpen] = useState<boolean>(true);
+    const [cookies, setCookie, removeCookie] = useCookies([
+        "access_token",
+        "refresh_token",
+    ]);
 
-    const refreshToken = localStorage.getItem("refreshToken");
+    const expires = new Date();
+    expires.setTime(expires.getTime() + 12 * 60);
 
     const handleOnClick = async () => {
         const res = await axios.post<IToken>(
@@ -40,62 +39,43 @@ export function AuthDialog({
             user
         );
 
-        localStorage.setItem("accessToken", res.data.accessToken);
-        localStorage.setItem("refreshToken", res.data.refreshToken);
-
         if (res.status === 201) {
-            const token: IToken = {
-                accessToken: res.data.accessToken,
-                refreshToken: res.data.refreshToken,
-            };
-            setOpen(false);
-            setToken(token);
-        }
-    };
-
-    const refresh = async (refreshToken: string) => {
-        const res = await axios.post<string>(
-            `${import.meta.env.VITE_API}/auth/refresh`,
-            { refresh_token: refreshToken }
-        );
-
-        localStorage.setItem("accessToken", res.data);
-
-        if (res.status === 201) {
+            setCookie("access_token", res.data.accessToken, {
+                path: "/",
+                expires,
+            });
+            setCookie("refresh_token", res.data.refreshToken, {
+                path: "/",
+                expires,
+            });
             setOpen(false);
         }
     };
-
-    useEffect(() => {
-        if (refreshToken !== null) {
-            setOpen(false);
-            refresh(refreshToken);
-        }
-
-        if (refreshToken === null) setOpen(true);
-    }, []);
 
     const clearValues = async () => {
-        if (!token) return;
-        setToken(null);
+        if (!cookies.access_token) return;
         const res = await axios.delete(
-            `http://master.adsscode.com/auth/logout`,
-            { data: { refresh_token: refreshToken } }
+            `${import.meta.env.VITE_API}/auth/logout`,
+            { data: { refresh_token: cookies.refresh_token } }
         );
 
         if (res.status === 200) {
             setOpen(true);
 
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
+            removeCookie("access_token");
+            removeCookie("refresh_token");
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen} defaultOpen={!token && true}>
+        <Dialog
+            open={open}
+            onOpenChange={setOpen}
+            defaultOpen={!cookies && true}
+        >
             <DialogTrigger asChild>
                 <Button onClick={clearValues}>
-                    {token ? "Выйти" : "Войти"}
+                    {cookies.access_token ? "Выйти" : "Войти"}
                 </Button>
             </DialogTrigger>
 

@@ -11,8 +11,9 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { IToken } from "./AuthDialog";
+
 import axios from "axios";
+import { useCookies } from "react-cookie";
 
 export interface ICity {
     city_id: number;
@@ -23,17 +24,19 @@ export interface ICity {
 
 export function CityCombobox({
     getUser,
-    token,
 }: {
     getUser: (idCity: string) => Promise<void>;
-    token?: IToken | null;
 }) {
     const [open, setOpen] = React.useState(false);
 
     const [cities, setCities] = React.useState<ICity[]>([]);
     const [value, setValue] = React.useState("");
+    const [cookies, setCookie, removeCookie] = useCookies([
+        "access_token",
+        "refresh_token",
+    ]);
     const config = {
-        headers: { Authorization: `Bearer ${token?.accessToken}` },
+        headers: { Authorization: `Bearer ${cookies.access_token}` },
     };
 
     const getCity = async () => {
@@ -50,7 +53,7 @@ export function CityCombobox({
 
     React.useEffect(() => {
         setValue("");
-    }, [token]);
+    }, [cookies.access_token]);
 
     React.useEffect(() => {
         getUser(value);
