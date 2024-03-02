@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/popover";
 
 import axios from "axios";
-import { useCookies } from "react-cookie";
 
 export interface ICity {
     city_id: number;
@@ -31,14 +30,10 @@ export function CityCombobox({
 
     const [cities, setCities] = React.useState<ICity[]>([]);
     const [value, setValue] = React.useState("");
-    const [cookies] = useCookies(["access_token", "refresh_token"]);
-    const config = {
-        headers: { Authorization: `Bearer ${cookies.access_token}` },
-    };
 
     const getCity = async () => {
         axios
-            .get<ICity[]>(`${import.meta.env.VITE_API}/city/all`, config)
+            .get<ICity[]>(`${import.meta.env.VITE_API}/city/all`)
             .then((res) => {
                 setCities(res.data);
             });
@@ -47,10 +42,6 @@ export function CityCombobox({
     React.useEffect(() => {
         getCity();
     }, []);
-
-    React.useEffect(() => {
-        setValue("");
-    }, [cookies.access_token]);
 
     React.useEffect(() => {
         getUser(value);
