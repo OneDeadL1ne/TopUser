@@ -25,9 +25,9 @@ export function AuthDialog() {
     password: "string",
   });
 
-  const [open, setOpen] = useState<boolean>(true);
   const accessToken = getCookieValue("access_token");
   const refreshToken = getCookieValue("refresh_token");
+  const [open, setOpen] = useState<boolean>(!accessToken && !refreshToken);
   //   const [cookies, setCookie, removeCookie] = useCookies([
   //     "access_token",
   //     "refresh_token",
@@ -70,11 +70,7 @@ export function AuthDialog() {
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={setOpen}
-      defaultOpen={!accessToken && !refreshToken && true}
-    >
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button onClick={clearValues}>{accessToken ? "Выйти" : "Войти"}</Button>
       </DialogTrigger>
