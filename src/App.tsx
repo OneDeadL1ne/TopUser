@@ -20,7 +20,7 @@ export default function App() {
     const getUsers = async (idCity: string) => {
         axios
             .get<User[]>(
-                `${import.meta.env.VITE_API}/user-rating/all/${idCity}`,
+                `${import.meta.env.VITE_API}/user-rating/all?city_id=${idCity}`,
                 config
             )
             .then((res) => {
@@ -86,7 +86,7 @@ export default function App() {
                                                     {medal.get(key)}
                                                     <Avatar>
                                                         <AvatarImage
-                                                            className="h-[50px]"
+                                                            className=" h-[50px] w-[50px] rounded-full object-cover"
                                                             src={`${
                                                                 import.meta.env
                                                                     .VITE_API
@@ -95,7 +95,12 @@ export default function App() {
                                                             }.jpg`}
                                                         />
                                                         <AvatarFallback>
-                                                            <CircleUser className="" />
+                                                            <CircleUser
+                                                                size={50}
+                                                                strokeWidth={
+                                                                    1.3
+                                                                }
+                                                            />
                                                         </AvatarFallback>
                                                     </Avatar>
                                                 </>
@@ -106,7 +111,7 @@ export default function App() {
                                                     </p>
                                                     <Avatar>
                                                         <AvatarImage
-                                                            className="h-[50px]"
+                                                            className=" h-[50px] w-[50px] rounded-full object-cover"
                                                             src={`${
                                                                 import.meta.env
                                                                     .VITE_API
@@ -115,7 +120,12 @@ export default function App() {
                                                             }.jpg`}
                                                         />
                                                         <AvatarFallback>
-                                                            <CircleUser className="ml-[10px] mr-[10px]" />
+                                                            <CircleUser
+                                                                size={50}
+                                                                strokeWidth={
+                                                                    1.3
+                                                                }
+                                                            />
                                                         </AvatarFallback>
                                                     </Avatar>
                                                 </>
