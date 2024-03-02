@@ -7,6 +7,7 @@ import { Rating } from "@smastrom/react-rating";
 import { ScrollArea, ScrollBar } from "./components/ui/scroll-area";
 import { AuthDialog, IToken } from "./components/AuthDialog";
 import { CityCombobox } from "./components/CityCombobox";
+import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 
 export default function App() {
     const [token, setToken] = useState<IToken | null>(null);
@@ -83,14 +84,40 @@ export default function App() {
                                             {medal.get(key) !== undefined ? (
                                                 <>
                                                     {medal.get(key)}
-                                                    <CircleUser className="mr-[10px]" />
+                                                    <Avatar>
+                                                        <AvatarImage
+                                                            className="h-[50px]"
+                                                            src={`${
+                                                                import.meta.env
+                                                                    .VITE_API
+                                                            }/file/uploads?path=uploads/users/${
+                                                                user.user_uuid
+                                                            }.jpg`}
+                                                        />
+                                                        <AvatarFallback>
+                                                            <CircleUser className="" />
+                                                        </AvatarFallback>
+                                                    </Avatar>
                                                 </>
                                             ) : (
                                                 <>
                                                     <p className="h-[32px] ml-[30px]">
                                                         {key + 1}
                                                     </p>
-                                                    <CircleUser className="ml-[10px] mr-[10px]" />
+                                                    <Avatar>
+                                                        <AvatarImage
+                                                            className="h-[50px]"
+                                                            src={`${
+                                                                import.meta.env
+                                                                    .VITE_API
+                                                            }/file/uploads?path=uploads/users/${
+                                                                user.user_uuid
+                                                            }.jpg`}
+                                                        />
+                                                        <AvatarFallback>
+                                                            <CircleUser className="ml-[10px] mr-[10px]" />
+                                                        </AvatarFallback>
+                                                    </Avatar>
                                                 </>
                                             )}
 
