@@ -1,168 +1,137 @@
 import axios from "axios";
 import { User } from "./types/user";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CircleUser } from "lucide-react";
 import "@smastrom/react-rating/style.css";
 import { Rating } from "@smastrom/react-rating";
 import { ScrollArea, ScrollBar } from "./components/ui/scroll-area";
-import { AuthDialog } from "./components/AuthDialog";
+
 import { CityCombobox } from "./components/CityCombobox";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
-import { getCookieValue } from "./lib/utils";
 
 export default function App() {
-  const [users, setUsers] = useState<User[]>([]);
-  const accessToken = getCookieValue("access_token");
-  const refreshToken = getCookieValue("refresh_token");
-  //   const [cookies, setCookie, removeCookie] = useCookies([
-  //     "access_token",
-  //     "refresh_token",
-  //   ]);
+    const [users, setUsers] = useState<User[]>([]);
 
-  const expires = new Date();
-  expires.setTime(expires.getTime() + 12 * 60);
+    const getUsers = async (idCity: string) => {
+        if (idCity.length === 0) return setUsers([]);
+        axios
+            .get<User[]>(
+                `${import.meta.env.VITE_API}/user-rating/all/${idCity}`
+            )
+            .then((res) => {
+                setUsers(res.data);
+            });
+    };
 
-  const config = {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  };
+    const medal = new Map<number, React.ReactNode>();
+    medal.set(0, <img src="/gold.png" className="h-[32px] ml-5" />);
+    medal.set(1, <img src="/silver.png" className="h-[32px] ml-5" />);
+    medal.set(2, <img src="/bronze.png" className="h-[32px] ml-5" />);
 
-  const getUsers = async (idCity: string) => {
-    axios
-      .get<User[]>(
-        `${import.meta.env.VITE_API}/user-rating/all/${idCity}`,
-        config
-      )
-      .then((res) => {
-        setUsers(res.data);
-      });
-  };
-
-  useEffect(() => {
-    setUsers([]);
-  }, [accessToken]);
-
-  const refresh = async () => {
-    const res = await axios.post<string>(
-      `${import.meta.env.VITE_API}/auth/refresh`,
-      { refresh_token: refreshToken }
-    );
-
-    if (res.status === 201) {
-      document.cookie = `access_token=${res.data}; Max-Age=86400`;
-      //   setCookie("access_token", res.data, {
-      //     expires,
-      //   });
-    }
-  };
-
-  useEffect(() => {
-    if (refreshToken && accessToken) {
-      refresh();
-    }
-  }, []);
-
-  const medal = new Map<number, React.ReactNode>();
-  medal.set(0, <img src="/gold.png" className="h-[32px] ml-5" />);
-  medal.set(1, <img src="/silver.png" className="h-[32px] ml-5" />);
-  medal.set(2, <img src="/bronze.png" className="h-[32px] ml-5" />);
-
-  return (
-    <div className="m-3 p-1">
-      <div className="w-full flow-root">
-        <div className="float-start">
-          <CityCombobox getUser={getUsers} />
-        </div>
-        <div className="float-end">
-          <AuthDialog />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-5 outline outline-gray-400 text-2xl text-gray-500 outline-1 rounded-xl shadow-md mb-5 pt-2 pb-2 ">
-        <div className="flex items-center justify-center ">ФИО</div>
-
-        <div className="flex justify-center  text-wrap ">СРЕДНЯЯ ОЦЕНКА</div>
-        <div className="flex justify-center ">СТАТУС</div>
-        <div className="flex justify-center ">КОЛ-ВО ЗАКАЗОВ</div>
-        <div className="flex justify-center ">РЕЙТИНГ</div>
-      </div>
-
-      <div className="h-full w-full overflow-hidden  overflow-y-auto">
-        <ScrollArea className="min-h-full">
-          {users.length !== 0 ? (
-            users.map((user, key) => (
-              <>
-                <div
-                  key={key}
-                  className="grid grid-cols-5 mb-4 shadow-md outline outline-gray-400 outline-1 rounded-xl pb-6 pt-6 m-1"
-                >
-                  <div className="flex items-center justify-start  text-lg linear-gradient">
-                    <div className="flex items-center justify-start gap-2">
-                      {medal.get(key) !== undefined ? (
-                        <>
-                          {medal.get(key)}
-                          <Avatar>
-                            <AvatarImage
-                              className=" h-[50px] w-[50px] rounded-full object-cover"
-                              src={`${
-                                import.meta.env.VITE_API
-                              }/file/uploads?path=uploads/users/${
-                                user.user_uuid
-                              }.jpg`}
-                            />
-                            <AvatarFallback>
-                              <CircleUser size={50} strokeWidth={1.3} />
-                            </AvatarFallback>
-                          </Avatar>
-                        </>
-                      ) : (
-                        <>
-                          <p className="h-[32px] ml-[30px]">{key + 1}</p>
-                          <Avatar>
-                            <AvatarImage
-                              className=" h-[50px] w-[50px] rounded-full object-cover"
-                              src={`${
-                                import.meta.env.VITE_API
-                              }/file/uploads?path=uploads/users/${
-                                user.user_uuid
-                              }.jpg`}
-                            />
-                            <AvatarFallback>
-                              <CircleUser size={50} strokeWidth={1.3} />
-                            </AvatarFallback>
-                          </Avatar>
-                        </>
-                      )}
-
-                      <div className="text-xl text-wrap ">{`${user.person.last_name} ${user.person.first_name}`}</div>
-                    </div>
-                  </div>
-                  <div className="flex  justify-center items-center gap-1 text-2xl linear-gradient ">
-                    <Rating
-                      className=""
-                      style={{ maxWidth: 150 }}
-                      value={user.avg_evaluation}
-                      readOnly
-                    />
-                    {user.avg_evaluation}
-                  </div>
-                  <div className=" flex items-center justify-center text-2xl linear-gradient">
-                    {user.rating_status}
-                  </div>
-                  <div className=" flex items-center justify-center text-2xl linear-gradient">
-                    {user.order_count}
-                  </div>
-                  <div className=" items-center outline-1 flex justify-center text-2xl">
-                    {user.rating}
-                  </div>
+    return (
+        <div className="m-3 p-1">
+            <div className="w-full flow-root">
+                <div className="float-start">
+                    <CityCombobox getUser={getUsers} />
                 </div>
-              </>
-            ))
-          ) : (
-            <></>
-          )}
-          <ScrollBar orientation="vertical" />
-        </ScrollArea>
-      </div>
-    </div>
-  );
+            </div>
+
+            <div className="grid grid-cols-5 outline outline-gray-400 text-2xl text-gray-500 outline-1 rounded-xl shadow-md mb-5 pt-2 pb-2 ">
+                <div className="flex items-center justify-center ">ФИО</div>
+
+                <div className="flex justify-center  text-wrap ">
+                    СРЕДНЯЯ ОЦЕНКА
+                </div>
+                <div className="flex justify-center ">СТАТУС</div>
+                <div className="flex justify-center ">КОЛ-ВО ЗАКАЗОВ</div>
+                <div className="flex justify-center ">РЕЙТИНГ</div>
+            </div>
+
+            <div className="h-full w-full overflow-hidden  overflow-y-auto">
+                <ScrollArea className="min-h-full">
+                    {users.length !== 0 ? (
+                        users.map((user, key) => (
+                            <div
+                                key={key}
+                                className="grid grid-cols-5 mb-4 shadow-md outline outline-gray-400 outline-1 rounded-xl pb-6 pt-6 m-1"
+                            >
+                                <div className="flex items-center justify-start  text-lg linear-gradient">
+                                    <div className="flex items-center justify-start gap-2">
+                                        {medal.get(key) !== undefined ? (
+                                            <>
+                                                {medal.get(key)}
+                                                <Avatar>
+                                                    <AvatarImage
+                                                        className=" h-[50px] w-[50px] rounded-full object-cover"
+                                                        src={`${
+                                                            import.meta.env
+                                                                .VITE_API
+                                                        }/file/uploads?path=uploads/users/${
+                                                            user.user_uuid
+                                                        }.jpg`}
+                                                    />
+                                                    <AvatarFallback>
+                                                        <CircleUser
+                                                            size={50}
+                                                            strokeWidth={1.3}
+                                                        />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <p className="h-[32px] ml-[30px]">
+                                                    {key + 1}
+                                                </p>
+                                                <Avatar>
+                                                    <AvatarImage
+                                                        className=" h-[50px] w-[50px] rounded-full object-cover"
+                                                        src={`${
+                                                            import.meta.env
+                                                                .VITE_API
+                                                        }/file/uploads?path=uploads/users/${
+                                                            user.user_uuid
+                                                        }.jpg`}
+                                                    />
+                                                    <AvatarFallback>
+                                                        <CircleUser
+                                                            size={50}
+                                                            strokeWidth={1.3}
+                                                        />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </>
+                                        )}
+
+                                        <div className="text-xl text-wrap ">{`${user.person.last_name} ${user.person.first_name}`}</div>
+                                    </div>
+                                </div>
+                                <div className="flex  justify-center items-center gap-1 text-2xl linear-gradient ">
+                                    <Rating
+                                        className=""
+                                        style={{ maxWidth: 150 }}
+                                        value={user.avg_evaluation}
+                                        readOnly
+                                    />
+                                    {user.avg_evaluation}
+                                </div>
+                                <div className=" flex items-center justify-center text-2xl linear-gradient">
+                                    {user.rating_status}
+                                </div>
+                                <div className=" flex items-center justify-center text-2xl linear-gradient">
+                                    {user.order_count}
+                                </div>
+                                <div className=" items-center outline-1 flex justify-center text-2xl">
+                                    {user.rating}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <></>
+                    )}
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+            </div>
+        </div>
+    );
 }

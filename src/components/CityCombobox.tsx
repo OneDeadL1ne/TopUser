@@ -31,10 +31,7 @@ export function CityCombobox({
 
     const [cities, setCities] = React.useState<ICity[]>([]);
     const [value, setValue] = React.useState("");
-    const [cookies, setCookie, removeCookie] = useCookies([
-        "access_token",
-        "refresh_token",
-    ]);
+    const [cookies] = useCookies(["access_token", "refresh_token"]);
     const config = {
         headers: { Authorization: `Bearer ${cookies.access_token}` },
     };
